@@ -1,0 +1,5 @@
+/radare2-mcp
+/dist/
+/*.coverage
+*.r2pj
+*.tmp

@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version: '1.27.x'
+          cache: true
+      - name: Install pinned radare2
+        run: |
+          curl -fsSL -o /tmp/radare2.deb https://github.com/radareorg/radare2/releases/download/6.2.0/radare2_6.2.0_amd64.deb
+          echo "eb82324e83315887fbee6f5d8632c982c593e056a87180f1bec5ccb06c463aeb  /tmp/radare2.deb" | sha256sum -c -
+          sudo dpkg -i /tmp/radare2.deb
+          r2 -v
+      - run: go test -race ./...
+        env:
+          RADARE2_REQUIRED: "1"
+      - run: go vet ./...
+      - uses: golangci/golangci-lint-action@v9.3.0
+        with:
+          version: v2.13.2
+      - run: go build ./cmd/radare2-mcp
