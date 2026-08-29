@@ -64,6 +64,7 @@ func timingMiddleware(next mcp.MethodHandler) mcp.MethodHandler {
 		result, err := next(ctx, method, req)
 		if method == "tools/call" {
 			if call, ok := result.(*mcp.CallToolResult); ok {
+				compactDuplicatedStructuredContent(call)
 				if call.Meta == nil {
 					call.Meta = mcp.Meta{}
 				}
@@ -72,6 +73,28 @@ func timingMiddleware(next mcp.MethodHandler) mcp.MethodHandler {
 		}
 		return result, err
 	}
+}
+
+const structuredResultSummary = "Structured result returned."
+
+// AddTool mirrors typed structured output into a text block for clients that do
+// not support structuredContent. That doubles every successful tool result for
+// clients that retain both representations, which is especially expensive for
+// disassembly and cross-reference results. Replace only that exact SDK-generated
+// mirror; explicitly authored content is left untouched.
+func compactDuplicatedStructuredContent(call *mcp.CallToolResult) {
+	if call.StructuredContent == nil || len(call.Content) != 1 {
+		return
+	}
+	text, ok := call.Content[0].(*mcp.TextContent)
+	if !ok {
+		return
+	}
+	structured, err := json.Marshal(call.StructuredContent)
+	if err != nil || text.Text != string(structured) {
+		return
+	}
+	text.Text = structuredResultSummary
 }
 
 func notifyProgress(ctx context.Context, req *mcp.CallToolRequest, done, total int, message string) {

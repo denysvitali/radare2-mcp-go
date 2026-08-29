@@ -296,6 +296,13 @@ func TestMCPToolSchemasAndDispatch(t *testing.T) {
 	if res.StructuredContent == nil {
 		t.Fatal("typed structured result missing")
 	}
+	if len(res.Content) != 1 {
+		t.Fatalf("workspace_list returned %d content blocks, want 1", len(res.Content))
+	}
+	text, ok := res.Content[0].(*mcp.TextContent)
+	if !ok || text.Text != structuredResultSummary {
+		t.Fatalf("workspace_list content = %#v, want compact summary", res.Content[0])
+	}
 	if _, ok := res.Meta["duration_ms"]; !ok {
 		t.Fatalf("tool timing metadata missing: %#v", res.Meta)
 	}
