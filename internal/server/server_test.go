@@ -436,8 +436,8 @@ func TestLiveCompatibilityWorkflows(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if dec.Backend != "pdc" || dec.TotalLines <= 20 || !dec.Truncated {
-		t.Fatalf("decompiler fallback/page failed: %+v", dec)
+	if dec.Backend == "" || len(dec.Attempts) == 0 || dec.Attempts[len(dec.Attempts)-1].Backend != dec.Backend || dec.Attempts[len(dec.Attempts)-1].Status != "selected" || dec.TotalLines <= 20 || !dec.Truncated {
+		t.Fatalf("decompiler selection/page failed: %+v", dec)
 	}
 	_, links, err := svc.crossBinaryXrefs(ctx, nil, CrossXrefInput{FromTargets: []string{"true"}, ToTargets: []string{"libc"}, Symbol: "abort"})
 	if err != nil {
